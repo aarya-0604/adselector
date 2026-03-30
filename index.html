@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>AI Smart Ad Selector</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body style="text-align:center; font-family:sans-serif; background:#111; color:white;">
+
+```
+<h1>AI Smart Ad Selector</h1>
+
+<button onclick="getAd()">Show Ad</button>
+
+<div>
+    <img id="adImage" width="300"/>
+</div>
+
+<br>
+
+<button onclick="send(true)">Clicked</button>
+<button onclick="send(false)">Skip</button>
+
+<canvas id="chart" width="400" height="200"></canvas>
+```
+
+<script>
+let currentAd = "";
+let chart;
+
+function getAd() {
+    fetch("/get_ad")
+    .then(res => res.json())
+    .then(data => {
+        currentAd = data.ad;
+        document.getElementById("adImage").src = "/static/images/" + currentAd;
+    });
+}
+
+function send(clicked) {
+    fetch("/feedback", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ ad: currentAd, clicked: clicked })
+    })
+    .then(res => res.json())
+    .then(data => {
+        updateChart(data);
+    });
+}
+
+function updateChart(data) {
+    let labels = Object.keys(data);
+    let clicks = labels.map(a => data[a].clicks);
+
+    if(chart) chart.destroy();
+
+    let ctx = document.getElementById("chart").getContext("2d");
+
+    chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Clicks",
+                data: clicks
+            }]
+        }
+    });
+}
+</script>
+
+</body>
+</html>
